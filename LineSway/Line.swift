@@ -1,11 +1,3 @@
-//
-//  Line.swift
-//  LineSway
-//
-//  Created by ran on 1/26/20.
-//  Copyright © 2020 ran. All rights reserved.
-//
-
 import ScreenSaver
 
 class Line: NSObject {

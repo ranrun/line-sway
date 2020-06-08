@@ -1,11 +1,3 @@
-//
-//  LineSwayView.swift
-//  LineSway
-//
-//  Created by ran on 1/30/20.
-//  Copyright © 2020 ran. All rights reserved.
-//
-
 import ScreenSaver
 
 enum AnimationState {
@@ -64,85 +56,83 @@ class LineSwayView : ScreenSaverView {
   }
 
   override func animateOneFrame() {
-    // window!.disableFlushing()
-
     NSAnimationContext.runAnimationGroup({(context) -> Void in
-
-      switch state {
-      case .Initial:
-        let lineRand = Int(SSRandomIntBetween(0, 10))
-        if lineRand > 8 {
-          lineCount = Int(SSRandomIntBetween(1, 11))
-        } else {
-          lineCount = Int(SSRandomIntBetween(1, 5))
-        }
-        if lineCount % 2 == 0 {
-          lineCount = lineCount + 1
-        }
-        let yOffset = SSRandomFloatBetween(0, maxY - (2 * lineWidth))
-        if animationCompletions % 20 == 0 {
-          paceMod = Int(SSRandomIntBetween(2, 5))
-        }
-        globalColor = getColor()
-
-        lines.removeAll()
-        while lines.count < lineCount {
-          let point = NSMakePoint(0, yOffset + (3 * CGFloat(lines.count) * lineWidth))
-          let count = Int(SSRandomIntBetween(0, 30))
-          let line = Line(point:point, color: globalColor, count: count, paceMod: paceMod)
-          lines.append(line)
-        }
-
-        state = .AddLines
-      case .AddLines:
-        if lines.allSatisfy({$0.state == .Visible}) {
-          state = .RemoveLines
-        } else {
-          let containsAlphaIncrease = lines.contains {
-            let line = ($0 as Line)
-            return line.state == .AlphaIncrease
-          }
-          if !containsAlphaIncrease {
-            if let line = lines.filter({$0.state == .Initial}).randomElement() {
-              line.state = .AlphaIncrease
-            }
-          }
-        }
-      case .RemoveLines:
-        if lines.allSatisfy({$0.state == .Done}) {
-          state = .Done
-        } else {
-          let containsAlphaDecrease = lines.contains {
-            let line = ($0 as Line)
-            return line.state == .AlphaDecrease
-          }
-          if !containsAlphaDecrease {
-            if let line = lines.filter({ $0.state == .Visible}).randomElement() {
-              line.state = .AlphaDecrease
-            }
-          }
-        }
-      case .Done:
-        if globalCounter % 20 == 0 {
-          animationCompletions += 1
-          state = .Initial
-        }
-      }
-
-      for line in lines {
-        line.update()
-      }
-
+      animateState()
       globalCounter += 1
     }) {
-      // all done
       self.needsDisplay = true
     }
+  }
 
-    //    window!.enableFlushing()
+  func animateState() {
+    switch state {
+    case .Initial:
+      let lineRand = Int(SSRandomIntBetween(0, 10))
+      if lineRand > 8 {
+        lineCount = Int(SSRandomIntBetween(1, 11))
+      } else {
+        lineCount = Int(SSRandomIntBetween(1, 5))
+      }
+      if lineCount % 2 == 0 {
+        lineCount = lineCount + 1
+      }
+      let yOffset = SSRandomFloatBetween(0, maxY - (2 * lineWidth))
+      if animationCompletions % 20 == 0 {
+        paceMod = Int(SSRandomIntBetween(2, 5))
+      }
+      globalColor = getColor()
+
+      lines.removeAll()
+      while lines.count < lineCount {
+        let point = NSMakePoint(0, yOffset + (3 * CGFloat(lines.count) * lineWidth))
+        let count = Int(SSRandomIntBetween(0, 30))
+        let line = Line(point:point, color: globalColor, count: count, paceMod: paceMod)
+        lines.append(line)
+      }
+
+      state = .AddLines
+    case .AddLines:
+      if lines.allSatisfy({$0.state == .Visible}) {
+        state = .RemoveLines
+      } else {
+        let containsAlphaIncrease = lines.contains {
+          let line = ($0 as Line)
+          return line.state == .AlphaIncrease
+        }
+        if !containsAlphaIncrease {
+          if let line = lines.filter({$0.state == .Initial}).randomElement() {
+            line.state = .AlphaIncrease
+          }
+        }
+      }
+    case .RemoveLines:
+      if lines.allSatisfy({$0.state == .Done}) {
+        state = .Done
+      } else {
+        let containsAlphaDecrease = lines.contains {
+          let line = ($0 as Line)
+          return line.state == .AlphaDecrease
+        }
+        if !containsAlphaDecrease {
+          if let line = lines.filter({ $0.state == .Visible}).randomElement() {
+            line.state = .AlphaDecrease
+          }
+        }
+      }
+    case .Done:
+      if globalCounter % 20 == 0 {
+        animationCompletions += 1
+        state = .Initial
+      }
+    }
+
+    for line in lines {
+      line.update()
+    }
   }
 
   override func draw(_ rect: NSRect) {
+    super.draw(rect)
 
     if initializeFlag {
       viewBounds = rect
@@ -154,7 +144,6 @@ class LineSwayView : ScreenSaverView {
     NSColor.black.set()
     NSBezierPath.fill(rect)
 
-    // draw
     let ctx: CGContext = currentContext()
 
     for line in lines {
