@@ -189,6 +189,7 @@ class LineSwayView : ScreenSaverView {
   }
 
   override func viewDidMoveToWindow() {
+    super.viewDidMoveToWindow()
     initializeFlag = true;
   }
 
