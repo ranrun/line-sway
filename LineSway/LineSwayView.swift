@@ -7,6 +7,11 @@ enum AnimationState {
   case Done
 }
 
+enum LinePosition {
+  case Horizontal
+  case Vertical
+}
+
 class LineSwayView : ScreenSaverView {
   let myModuleName = "com.ranrun.LineSway"
 
@@ -35,6 +40,7 @@ class LineSwayView : ScreenSaverView {
   var stackUpdateCount = Int32(5)
   var paceMod = 5
   var state = AnimationState.Initial
+  var linePosition = LinePosition.Vertical
 
   override init?(frame: NSRect, isPreview: Bool) {
     viewBounds = frame
@@ -76,6 +82,7 @@ class LineSwayView : ScreenSaverView {
       if lineCount % 2 == 0 {
         lineCount = lineCount + 1
       }
+      let xOffset = SSRandomFloatBetween(0, maxX - (2 * lineWidth))
       let yOffset = SSRandomFloatBetween(0, maxY - (2 * lineWidth))
       if animationCompletions % 20 == 0 {
         paceMod = Int(SSRandomIntBetween(2, 5))
@@ -84,10 +91,17 @@ class LineSwayView : ScreenSaverView {
 
       lines.removeAll()
       while lines.count < lineCount {
-        let point = NSMakePoint(0, yOffset + (3 * CGFloat(lines.count) * lineWidth))
-        let count = Int(SSRandomIntBetween(0, 30))
-        let line = Line(point:point, color: globalColor, count: count, paceMod: paceMod)
-        lines.append(line)
+        if linePosition == .Vertical {
+          let point = NSMakePoint(xOffset + (3 * CGFloat(lines.count) * lineWidth), 0)
+          let count = Int(SSRandomIntBetween(0, 30))
+          let line = Line(point:point, color: globalColor, count: count, paceMod: paceMod)
+          lines.append(line)
+        } else if linePosition == .Horizontal {
+          let point = NSMakePoint(0, yOffset + (3 * CGFloat(lines.count) * lineWidth))
+          let count = Int(SSRandomIntBetween(0, 30))
+          let line = Line(point:point, color: globalColor, count: count, paceMod: paceMod)
+          lines.append(line)
+        }
       }
 
       state = .AddLines
@@ -121,6 +135,13 @@ class LineSwayView : ScreenSaverView {
       }
     case .Done:
       if globalCounter % 20 == 0 {
+        if SSRandomIntBetween(0, 100) == 0 {
+          if linePosition == .Horizontal {
+            linePosition = .Vertical
+          } else {
+            linePosition = .Horizontal
+          }
+        }
         animationCompletions += 1
         state = .Initial
       }
@@ -149,12 +170,21 @@ class LineSwayView : ScreenSaverView {
     for line in lines {
       ctx.saveGState()
 
-      line.color.withAlphaComponent(CGFloat(line.alpha)).set()
-      let bPath = NSBezierPath.init()
-      bPath.move(to: NSPoint.init(x:0, y:line.point.y))
-      bPath.line(to: NSPoint.init(x:maxX, y:line.point.y))
-      bPath.lineWidth = lineWidth
-      bPath.stroke()
+      if linePosition == LinePosition.Horizontal {
+        line.color.withAlphaComponent(CGFloat(line.alpha)).set()
+        let bPath = NSBezierPath.init()
+        bPath.move(to: NSPoint.init(x:0, y:line.point.y))
+        bPath.line(to: NSPoint.init(x:maxX, y:line.point.y))
+        bPath.lineWidth = lineWidth
+        bPath.stroke()
+      } else if linePosition == LinePosition.Vertical {
+        line.color.withAlphaComponent(CGFloat(line.alpha)).set()
+        let bPath = NSBezierPath.init()
+        bPath.move(to: NSPoint.init(x:line.point.x, y:0))
+        bPath.line(to: NSPoint.init(x:line.point.x, y:maxY))
+        bPath.lineWidth = lineWidth
+        bPath.stroke()
+      }
 
       ctx.restoreGState()
     }
